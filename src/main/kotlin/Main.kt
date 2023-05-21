@@ -15,6 +15,7 @@ fun main(args: Array<String>) {
     val buffer = ByteArray(2048)
     val packet = DatagramPacket(buffer, buffer.size)
     socket.receive(packet)
+
     val response = byteArrayOf(*packet.data)
     val dnsParser = DNSParser(response)
     val (header, question) = dnsParser.parse()

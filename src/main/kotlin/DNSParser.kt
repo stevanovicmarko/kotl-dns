@@ -1,37 +1,45 @@
+import java.io.ByteArrayInputStream
 
-class DNSParser(private val response: ByteArray) {
+class DNSParser(private val inputStream: ByteArrayInputStream) {
 
+    constructor(response: ByteArray) : this(ByteArrayInputStream(response))
 
-    fun parseDNHeader(): DNSHeader {
-        val items = response.sliceArray(0..11)
-        val id = items.sliceArray(0..1).toInteger()
-        val flags = items.sliceArray(2..3).toInteger()
-        val numQuestions = items.sliceArray(4..5).toInteger()
-        val numAnswers = items.sliceArray(6..7).toInteger()
-        val numAuthorities = items.sliceArray(8..9).toInteger()
-        val numAdditionals = items.sliceArray(10..11).toInteger()
-        return DNSHeader(id, flags, numQuestions, numAnswers, numAuthorities, numAdditionals)
+    private fun parseDNHeader(): DNSHeader {
+
+        val id = inputStream.readNBytes(2).toInteger()
+        val flags = inputStream.readNBytes(2).toInteger()
+        val numQuestions = inputStream.readNBytes(2).toInteger()
+        val numAnswers = inputStream.readNBytes(2).toInteger()
+        val numAuthorities = inputStream.readNBytes(2).toInteger()
+        val numAdditionals = inputStream.readNBytes(2).toInteger()
+
+        return  DNSHeader(id, flags, numQuestions, numAnswers, numAuthorities, numAdditionals)
     }
 
-    fun parseQuestion(): DNSQuestion {
-        val questionPart = response.sliceArray(12 until response.size)
+    private fun parseQuestion(): DNSQuestion {
         val parts = mutableListOf<String>()
-        var index = 0
-        while (questionPart[index] != 0.toByte()) {
-            val length = questionPart[index].toInt()
-            parts.add(String(questionPart.sliceArray(index + 1..index + length)))
-            index += length + 1
-        }
+
+        do {
+            val length = inputStream.read()
+            parts.add(inputStream.readNBytes(length).toString(Charsets.UTF_8))
+        } while (length.toByte() != 0.toByte())
+
         val name = parts.joinToString(".")
-        index += 1
-        val type = questionPart.sliceArray(index..index + 1).toInteger()
-        val clazz = questionPart.sliceArray(index + 2..index + 3).toInteger()
+
+        val type = inputStream.readNBytes(2).toInteger()
+        val clazz = inputStream.readNBytes(2).toInteger()
+
         return DNSQuestion(name.toByteArray(), type, Clazz(clazz))
+    }
+
+    private fun parseRecord() {
+        // TODO: Implement record parsing
     }
 
     fun parse(): Pair<DNSHeader, DNSQuestion> {
         val header = parseDNHeader()
         val question = parseQuestion()
+        val record = parseRecord()
         return Pair(header, question)
     }
 

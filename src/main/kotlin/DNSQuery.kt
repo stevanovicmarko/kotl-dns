@@ -15,13 +15,14 @@ class DNSQuery {
 
         private fun encodeDnsName(name: String): ByteArray {
             val parts = name.split(".")
-            val bytes = mutableListOf<Byte>()
+            var bytes = byteArrayOf()
+
             for (part in parts) {
-                bytes.add(part.length.toByte())
-                bytes.addAll(part.toByteArray().toList())
+                bytes += part.length.toByte()
+                bytes += part.toByteArray()
             }
-            bytes.add(0)
-            return bytes.toByteArray()
+            bytes += 0.toByte()
+            return bytes
         }
     }
 
