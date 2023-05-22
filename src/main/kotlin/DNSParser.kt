@@ -1,18 +1,18 @@
-import java.io.ByteArrayInputStream
+import java.io.DataInputStream
 
 
-class DNSParser(private val inputStream: ByteArrayInputStream) {
+class DNSParser(private val inputStream: DataInputStream) {
 
-    constructor(response: ByteArray) : this(ByteArrayInputStream(response))
+    constructor(response: ByteArray) : this(DataInputStream(response.inputStream()))
 
     private fun parseDNHeader(): DNSHeader {
 
-        val id = inputStream.readNBytes(2).toInteger()
-        val flags = inputStream.readNBytes(2).toInteger()
-        val numQuestions = inputStream.readNBytes(2).toInteger()
-        val numAnswers = inputStream.readNBytes(2).toInteger()
-        val numAuthorities = inputStream.readNBytes(2).toInteger()
-        val numAdditionals = inputStream.readNBytes(2).toInteger()
+        val id = inputStream.readShort().toInt()
+        val flags = inputStream.readShort().toInt()
+        val numQuestions = inputStream.readShort().toInt()
+        val numAnswers = inputStream.readShort().toInt()
+        val numAuthorities = inputStream.readShort().toInt()
+        val numAdditionals = inputStream.readShort().toInt()
 
         return DNSHeader(id, flags, numQuestions, numAnswers, numAuthorities, numAdditionals)
     }
@@ -27,9 +27,8 @@ class DNSParser(private val inputStream: ByteArrayInputStream) {
 
         val name = parts.filter { it.isNotEmpty() }.joinToString(".")
 
-        val type = inputStream.readNBytes(2).toInteger()
-        val clazz = inputStream.readNBytes(2).toInteger()
-        println(name)
+        val type = inputStream.readShort().toInt()
+        val clazz = inputStream.readShort().toInt()
         return DNSQuestion(name.toByteArray(), type, Clazz(clazz))
     }
 
@@ -63,10 +62,10 @@ class DNSParser(private val inputStream: ByteArrayInputStream) {
         // TODO: Input steam positioning is broken after decodeName()
         inputStream.reset()
         inputStream.skip(31)
-        val type = inputStream.readNBytes(2).toInteger()
-        val clazz = inputStream.readNBytes(2).toInteger()
-        val ttl = inputStream.readNBytes(4).toInteger()
-        val dataLength = inputStream.readNBytes(2).toInteger()
+        val type = inputStream.readShort().toInt()
+        val clazz = inputStream.readShort().toInt()
+        val ttl = inputStream.readInt()
+        val dataLength = inputStream.readShort().toInt()
         println("Name: $name, Type: $type, Class: $clazz, TTL: $ttl, Data Length: $dataLength")
     }
 
