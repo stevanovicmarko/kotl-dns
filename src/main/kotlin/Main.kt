@@ -5,7 +5,7 @@ import java.net.InetAddress
 
 fun main(args: Array<String>) {
 
-    val sendData = DNSQuery.buildQuery("www.example.com", RecordType.A)
+    val sendData = DNSQuery.buildQuery("example.com", RecordType.A)
 
     val socket = DatagramSocket()
     socket.broadcast = true

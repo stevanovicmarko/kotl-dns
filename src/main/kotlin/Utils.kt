@@ -5,6 +5,7 @@ fun Int.to2ByteArray(): ByteArray {
 
 
 fun ByteArray.toInteger(): Int {
+    // TODO: This is maybe not correct
     var result = 0
     var shift = 0
     for (byte in this.reversed()) {
