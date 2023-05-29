@@ -1,14 +1,16 @@
+package dns
+
 import kotlin.random.Random
 
-class DNSQuery {
+class DnsQuery {
 
     companion object {
-        fun buildQuery(domainName: String, recordType: RecordType): ByteArray {
+        fun buildQuery(domainName: String, dnsRecordType: DnsRecordType): ByteArray {
             val name = encodeDnsName(domainName)
             val id = Random.nextInt(0, 65535)
             val recursionDesired = 1.shl(8)
-            val header = DNSHeader(id = id, flags = recursionDesired, numQuestions = 1)
-            val question = DNSQuestion(name, recordType.value, Clazz.CLASS_IN)
+            val header = DnsHeader(id = id, flags = recursionDesired, numQuestions = 1)
+            val question = DnsQuestion(name, dnsRecordType.value, DnsClazz.CLASS_IN)
 
             return header.toBytes() + question.toBytes()
         }

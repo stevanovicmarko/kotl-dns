@@ -1,5 +1,8 @@
+package dns
 
-data class DNSHeader(
+import utils.to2ByteArray
+
+data class DnsHeader(
     val id: Int,
     val flags: Int,
     val numQuestions: Int = 0,

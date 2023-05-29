@@ -1,3 +1,5 @@
+import dns.DnsQuery
+import dns.DnsRecordType
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -5,7 +7,7 @@ import java.net.InetAddress
 
 fun main(args: Array<String>) {
 
-    val sendData = DNSQuery.buildQuery("example.com", RecordType.A)
+    val sendData = DnsQuery.buildQuery("www.example.com", DnsRecordType.A)
 
     val socket = DatagramSocket()
     socket.broadcast = true
@@ -17,8 +19,9 @@ fun main(args: Array<String>) {
     socket.receive(packet)
 
     val response = byteArrayOf(*packet.data)
-    val dnsParser = DNSParser(response)
-    val (header, question) = dnsParser.parse()
+    val dnsParser = DnsParser(response)
+    val (header, question, record) = dnsParser.parse()
     println(header)
     println(question)
+    println(record)
 }

@@ -1,11 +1,11 @@
-import java.io.DataInputStream
+import dns.*
+import utils.CountingDataInputStream
 
+class DnsParser(private val inputStream: CountingDataInputStream) {
 
-class DNSParser(private val inputStream: DataInputStream) {
+    constructor(response: ByteArray) : this(CountingDataInputStream(response.inputStream()))
 
-    constructor(response: ByteArray) : this(DataInputStream(response.inputStream()))
-
-    private fun parseDNHeader(): DNSHeader {
+    private fun parseDNHeader(): DnsHeader {
 
         val id = inputStream.readShort().toInt()
         val flags = inputStream.readShort().toInt()
@@ -14,10 +14,10 @@ class DNSParser(private val inputStream: DataInputStream) {
         val numAuthorities = inputStream.readShort().toInt()
         val numAdditionals = inputStream.readShort().toInt()
 
-        return DNSHeader(id, flags, numQuestions, numAnswers, numAuthorities, numAdditionals)
+        return DnsHeader(id, flags, numQuestions, numAnswers, numAuthorities, numAdditionals)
     }
 
-    private fun parseQuestion(): DNSQuestion {
+    private fun parseQuestion(): DnsQuestion {
         val parts = mutableListOf<String>()
 
         do {
@@ -29,15 +29,14 @@ class DNSParser(private val inputStream: DataInputStream) {
 
         val type = inputStream.readShort().toInt()
         val clazz = inputStream.readShort().toInt()
-        return DNSQuestion(name.toByteArray(), type, Clazz(clazz))
+        return DnsQuestion(name.toByteArray(), type, DnsClazz(clazz))
     }
 
     private fun decodeCompressedName(length: Int): String {
         val pointer = (length and 0b00111111) + inputStream.read()
         inputStream.reset()
         inputStream.skip(pointer.toLong())
-        val name = decodeName()
-        return name
+        return decodeName()
     }
 
     private fun decodeName(): String {
@@ -57,23 +56,25 @@ class DNSParser(private val inputStream: DataInputStream) {
         return parts.filter { it.isNotEmpty() }.joinToString(".")
     }
 
-    private fun parseRecord() {
+    private fun parseRecord(): DnsRecord {
+        val count = inputStream.count
         val name = decodeName()
-        // TODO: Input steam positioning is broken after decodeName()
         inputStream.reset()
-        inputStream.skip(31)
+        inputStream.skip((count + 2).toLong())
         val type = inputStream.readShort().toInt()
         val clazz = inputStream.readShort().toInt()
         val ttl = inputStream.readInt()
         val dataLength = inputStream.readShort().toInt()
-        println("Name: $name, Type: $type, Class: $clazz, TTL: $ttl, Data Length: $dataLength")
+//        println("Name: $name, Type: $type, Class: $clazz, TTL: $ttl, Data Length: $dataLength")
+        val data = inputStream.readNBytes(dataLength)
+        return DnsRecord(name, type, DnsClazz(clazz), ttl, data)
     }
 
-    fun parse(): Pair<DNSHeader, DNSQuestion> {
+    fun parse(): Triple<DnsHeader, DnsQuestion, DnsRecord> {
         val header = parseDNHeader()
         val question = parseQuestion()
-        parseRecord()
-        return Pair(header, question)
+        val record = parseRecord()
+        return Triple(header, question, record)
     }
 
 }
