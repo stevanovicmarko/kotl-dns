@@ -2,6 +2,7 @@ package utils
 
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
+import java.nio.ByteBuffer
 
 class CountingDataInputStream(inputStream: ByteArrayInputStream) {
     var count = 0
@@ -38,4 +39,6 @@ class CountingDataInputStream(inputStream: ByteArrayInputStream) {
         count += n.toInt()
         dataInputStream.skip(n)
     }
+
+    fun readShortToInt(): Int = ByteBuffer.wrap(byteArrayOf(0, 0, *this.readNBytes(2))).getInt()
 }

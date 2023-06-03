@@ -14,14 +14,13 @@ fun main(args: Array<String>) {
     val sendPacket = DatagramPacket(sendData, sendData.size, InetAddress.getByName("8.8.8.8"), 53)
     socket.send(sendPacket)
 
-    val buffer = ByteArray(2048)
+    val buffer = ByteArray(1024)
     val packet = DatagramPacket(buffer, buffer.size)
     socket.receive(packet)
 
     val response = byteArrayOf(*packet.data)
     val dnsParser = DnsParser(response)
-    val (header, question, record) = dnsParser.parse()
-    println(header)
-    println(question)
-    println(record)
+    val dnsPacket = dnsParser.parse()
+    println(dnsPacket)
+    println(dnsPacket.ipAddresses())
 }

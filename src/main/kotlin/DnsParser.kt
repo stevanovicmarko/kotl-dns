@@ -5,14 +5,14 @@ class DnsParser(private val inputStream: CountingDataInputStream) {
 
     constructor(response: ByteArray) : this(CountingDataInputStream(response.inputStream()))
 
-    private fun parseDNHeader(): DnsHeader {
+    private fun parseDnsHeader(): DnsHeader {
 
-        val id = inputStream.readShort().toInt()
-        val flags = inputStream.readShort().toInt()
-        val numQuestions = inputStream.readShort().toInt()
-        val numAnswers = inputStream.readShort().toInt()
-        val numAuthorities = inputStream.readShort().toInt()
-        val numAdditionals = inputStream.readShort().toInt()
+        val id = inputStream.readShortToInt()
+        val flags = inputStream.readShortToInt()
+        val numQuestions = inputStream.readShortToInt()
+        val numAnswers = inputStream.readShortToInt()
+        val numAuthorities = inputStream.readShortToInt()
+        val numAdditionals = inputStream.readShortToInt()
 
         return DnsHeader(id, flags, numQuestions, numAnswers, numAuthorities, numAdditionals)
     }
@@ -65,16 +65,17 @@ class DnsParser(private val inputStream: CountingDataInputStream) {
         val clazz = inputStream.readShort().toInt()
         val ttl = inputStream.readInt()
         val dataLength = inputStream.readShort().toInt()
-//        println("Name: $name, Type: $type, Class: $clazz, TTL: $ttl, Data Length: $dataLength")
         val data = inputStream.readNBytes(dataLength)
         return DnsRecord(name, type, DnsClazz(clazz), ttl, data)
     }
 
-    fun parse(): Triple<DnsHeader, DnsQuestion, DnsRecord> {
-        val header = parseDNHeader()
-        val question = parseQuestion()
-        val record = parseRecord()
-        return Triple(header, question, record)
+    fun parse(): DnsPacket {
+        val header = parseDnsHeader()
+        val questions = (0 until header.numQuestions).map { parseQuestion() }
+        val answers = (0 until header.numAnswers).map { parseRecord() }
+        val authorities = (0 until header.numAuthorities).map { parseRecord() }
+        val additionals = (0 until header.numAdditionals).map { parseRecord() }
+        return DnsPacket(header, questions, answers, authorities, additionals)
     }
 
 }

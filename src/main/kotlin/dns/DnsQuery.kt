@@ -11,7 +11,6 @@ class DnsQuery {
             val recursionDesired = 1.shl(8)
             val header = DnsHeader(id = id, flags = recursionDesired, numQuestions = 1)
             val question = DnsQuestion(name, dnsRecordType.value, DnsClazz.CLASS_IN)
-
             return header.toBytes() + question.toBytes()
         }
 
