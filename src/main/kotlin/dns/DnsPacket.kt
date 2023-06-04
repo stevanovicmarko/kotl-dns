@@ -6,8 +6,4 @@ data class DnsPacket(val header: DnsHeader,
                      val authorities: List<DnsRecord>,
                      val additionals: List<DnsRecord>) {
 
-    fun ipAddresses(): List<List<UByte>> {
-        return answers.filter { it.type == DnsRecordType.A.value }
-            .map { it -> it.data.map { it.toUByte() } }
-    }
 }

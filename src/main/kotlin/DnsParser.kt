@@ -1,5 +1,6 @@
 import dns.*
 import utils.CountingDataInputStream
+import java.nio.charset.Charset
 
 class DnsParser(private val inputStream: CountingDataInputStream) {
 
@@ -27,8 +28,8 @@ class DnsParser(private val inputStream: CountingDataInputStream) {
 
         val name = parts.filter { it.isNotEmpty() }.joinToString(".")
 
-        val type = inputStream.readShort().toInt()
-        val clazz = inputStream.readShort().toInt()
+        val type = inputStream.readShortToInt()
+        val clazz = inputStream.readShortToInt()
         return DnsQuestion(name.toByteArray(), type, DnsClazz(clazz))
     }
 
@@ -56,16 +57,33 @@ class DnsParser(private val inputStream: CountingDataInputStream) {
         return parts.filter { it.isNotEmpty() }.joinToString(".")
     }
 
+    private fun decodeIpAddress(dataLength: Int): String {
+        val parts = mutableListOf<String>()
+        for (i in 0 until dataLength) {
+            parts.add(inputStream.read().toString())
+        }
+        return parts.joinToString(".")
+    }
+
     private fun parseRecord(): DnsRecord {
         val count = inputStream.count
         val name = decodeName()
+
+        // TODO: This is clumsy, but it works for now
         inputStream.reset()
         inputStream.skip((count + 2).toLong())
-        val type = inputStream.readShort().toInt()
-        val clazz = inputStream.readShort().toInt()
+
+        val type = inputStream.readShortToInt()
+        val clazz = inputStream.readShortToInt()
         val ttl = inputStream.readInt()
-        val dataLength = inputStream.readShort().toInt()
-        val data = inputStream.readNBytes(dataLength)
+        val dataLength = inputStream.readShortToInt()
+
+        val data = when (type) {
+            DnsRecordType.NS.value -> decodeName()
+            DnsRecordType.A.value -> decodeIpAddress(dataLength)
+            else -> String(inputStream.readNBytes(dataLength), Charset.defaultCharset())
+        }
+
         return DnsRecord(name, type, DnsClazz(clazz), ttl, data)
     }
 
