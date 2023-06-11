@@ -4,10 +4,11 @@ import DnsParser
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.nio.charset.Charset
 import kotlin.random.Random
 
 class DnsQuery
-    (private val ipAddress: String, domainName: String, dnsRecordType: DnsRecordType) {
+    (domainName: String, dnsRecordType: DnsRecordType) {
 
     private val sendData: ByteArray
     private val socket = DatagramSocket()
@@ -33,8 +34,16 @@ class DnsQuery
         return bytes
     }
 
+    fun getAnswer(response: DnsPacket): String? = response.answers.find { it.type == DnsRecordType.A.value }?.data
 
-    fun sendQuery(): DnsPacket {
+    fun getNameServerIp(response: DnsPacket): String? = response.additionals.find { it.type == DnsRecordType.A.value }?.data
+
+    fun getNameServer(response: DnsPacket): String?  = response.authorities.find { it.type == DnsRecordType.NS.value }?.let {
+            return String(it.data.toByteArray(Charset.defaultCharset()), Charsets.UTF_8)
+        }
+
+
+    fun sendQuery(ipAddress: String): DnsPacket {
         val sendPacket = DatagramPacket(sendData, sendData.size, InetAddress.getByName(ipAddress), 53)
         socket.send(sendPacket)
 
