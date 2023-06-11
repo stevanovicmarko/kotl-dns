@@ -16,8 +16,7 @@ class DnsQuery
         socket.broadcast = true
         val name = encodeDnsName(domainName)
         val id = Random.nextInt(0, 65535)
-        val recursionDesired = 1.shl(8)
-        val header = DnsHeader(id = id, flags = recursionDesired, numQuestions = 1)
+        val header = DnsHeader(id = id, flags = 0, numQuestions = 1)
         val question = DnsQuestion(name, dnsRecordType.value, DnsClazz.CLASS_IN)
         this.sendData = header.toBytes() + question.toBytes()
     }

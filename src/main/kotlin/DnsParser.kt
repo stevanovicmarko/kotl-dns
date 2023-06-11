@@ -3,7 +3,6 @@ import utils.CountingDataInputStream
 import java.nio.charset.Charset
 
 class DnsParser(private val inputStream: CountingDataInputStream) {
-
     constructor(response: ByteArray) : this(CountingDataInputStream(response.inputStream()))
 
     private fun parseDnsHeader(): DnsHeader {
@@ -35,9 +34,13 @@ class DnsParser(private val inputStream: CountingDataInputStream) {
 
     private fun decodeCompressedName(length: Int): String {
         val pointer = (length and 0b00111111) + inputStream.read()
+        val currentPosition = inputStream.count
         inputStream.reset()
         inputStream.skip(pointer.toLong())
-        return decodeName()
+        val result = decodeName()
+        inputStream.reset()
+        inputStream.skip(currentPosition.toLong())
+        return result
     }
 
     private fun decodeName(): String {
@@ -66,12 +69,7 @@ class DnsParser(private val inputStream: CountingDataInputStream) {
     }
 
     private fun parseRecord(): DnsRecord {
-        val count = inputStream.count
         val name = decodeName()
-
-        // TODO: This is clumsy, but it works for now
-        inputStream.reset()
-        inputStream.skip((count + 2).toLong())
 
         val type = inputStream.readShortToInt()
         val clazz = inputStream.readShortToInt()
