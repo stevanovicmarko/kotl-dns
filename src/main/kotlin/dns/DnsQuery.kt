@@ -7,6 +7,8 @@ import java.net.InetAddress
 import java.nio.charset.Charset
 import kotlin.random.Random
 
+const val DEFAULT_NAMESERVER = "198.41.0.4"
+
 class DnsQuery
     (domainName: String, dnsRecordType: DnsRecordType) {
 
@@ -54,5 +56,23 @@ class DnsQuery
         val response = byteArrayOf(*packet.data)
         val dnsParser = DnsParser(response)
         return dnsParser.parse()
+    }
+
+    companion object {
+        fun resolve(domainName: String, recordType: DnsRecordType): String {
+            var nameserver = DEFAULT_NAMESERVER
+            while (true) {
+                val query = DnsQuery(domainName, recordType)
+                val response = query.sendQuery(nameserver)
+
+                query.getAnswer(response)?.let {
+                    return it
+                }
+
+                nameserver = query.getNameServerIp(response)
+                    ?: query.getNameServer(response)?.let { resolve(it, DnsRecordType.A) }
+                            ?: throw Exception("No answer found")
+            }
+        }
     }
 }
