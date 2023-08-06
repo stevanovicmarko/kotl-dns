@@ -25,11 +25,6 @@ class CountingDataInputStream(inputStream: ByteArrayInputStream) {
         return dataInputStream.readInt()
     }
 
-    fun readShort(): Short {
-        count += 2
-        return dataInputStream.readShort()
-    }
-
     fun reset() {
         count = 0
         dataInputStream.reset()
